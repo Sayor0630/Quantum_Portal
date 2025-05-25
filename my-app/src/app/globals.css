@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-white text-black;
+}
+
+/* Basic dark mode support if needed, or rely on Tailwind's dark: prefix */
+/* For example:
+body.dark {
+  @apply bg-black text-white;
+}
+*/
+
+/* Example: Ensure links have a consistent style if not using utility classes everywhere */
+/* a {
+  @apply text-blue-600 hover:text-blue-800;
+} */
+
+/* Add any other global styles or overrides here */
