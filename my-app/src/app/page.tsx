@@ -1,90 +1,75 @@
-import Link from 'next/link';
-import Image from 'next/image'; // Using next/image for optimized images
-import CategoryCard from '@/components/ui/CategoryCard';
-import SimpleProductCard from '@/components/products/SimpleProductCard';
+// No "use client" needed here, this is a Server Component
+import { getHomepageElements, PopulatedPageElement } from '@/server/utils/pageElementUtils'; // Adjust path
+import RenderHeroBanner, { HeroConfig } from '@/components/homepage/RenderHeroBanner';
+import RenderProductCarousel, { ProductCarouselConfig } from '@/components/homepage/RenderProductCarousel';
+import RenderTextBlock, { TextBlockConfig } from '@/components/homepage/RenderTextBlock';
+// Import other specific element rendering components as needed
 
-export default function HomePage() {
-  // Placeholder data
-  const categories = [
-    { name: 'Electronics', imageUrl: 'https://placehold.co/600x400/E2E8F0/AAAAAA?text=Electronics', link: '/products?category=electronics' },
-    { name: 'Apparel', imageUrl: 'https://placehold.co/600x400/E2E8F0/AAAAAA?text=Apparel', link: '/products?category=apparel' },
-    { name: 'Books', imageUrl: 'https://placehold.co/600x400/E2E8F0/AAAAAA?text=Books', link: '/products?category=books' },
-    { name: 'Home Goods', imageUrl: 'https://placehold.co/600x400/E2E8F0/AAAAAA?text=Home+Goods', link: '/products?category=homegoods' },
-  ];
+// Helper to select and render the correct component for an element
+function renderPageElement(element: PopulatedPageElement) {
+  switch (element.elementType) {
+    case 'HeroBanner':
+      // Type assertion is safe here if config structure is guaranteed by admin forms/API
+      return <RenderHeroBanner key={element._id.toString()} config={element.config as HeroConfig} />;
+    case 'ProductCarousel':
+      return <RenderProductCarousel key={element._id.toString()} config={element.config as ProductCarouselConfig} />;
+    case 'TextBlock':
+      return <RenderTextBlock key={element._id.toString()} config={element.config as TextBlockConfig} />;
+    // Add cases for other element types
+    default:
+      console.warn(`Unsupported page element type: ${element.elementType} for element ID ${element._id}`);
+      return (
+        <div key={element._id.toString()} className="container mx-auto my-4 p-4 border border-dashed border-red-400 bg-red-50">
+          <p className="text-red-700 text-center">
+            Unsupported element type: &quot;{element.elementType}&quot;. Please check admin configuration or implement a rendering component.
+          </p>
+        </div>
+      );
+  }
+}
 
-  const newArrivals = [
-    { id: '1', name: 'Latest Smartphone', price: '$699.99', imageUrl: 'https://placehold.co/400x400/E2E8F0/AAAAAA?text=Product+1', link: '/products/latest-smartphone' },
-    { id: '2', name: 'Wireless Headphones', price: '$199.99', imageUrl: 'https://placehold.co/400x400/E2E8F0/AAAAAA?text=Product+2', link: '/products/wireless-headphones' },
-    { id: '3', name: 'Smart Watch Series X', price: '$299.99', imageUrl: 'https://placehold.co/400x400/E2E8F0/AAAAAA?text=Product+3', link: '/products/smart-watch-x' },
-    { id: '4', name: 'Bluetooth Speaker', price: '$99.99', imageUrl: 'https://placehold.co/400x400/E2E8F0/AAAAAA?text=Product+4', link: '/products/bluetooth-speaker' },
-  ];
+export default async function HomePage() {
+  let homepageElements: PopulatedPageElement[] = [];
+  let error: string | null = null;
 
-  const popularProducts = [
-    { id: '5', name: 'Classic T-Shirt', price: '$29.99', imageUrl: 'https://placehold.co/400x400/D1D5DB/AAAAAA?text=Product+5', link: '/products/classic-tshirt' },
-    { id: '6', name: 'Running Shoes', price: '$129.99', imageUrl: 'https://placehold.co/400x400/D1D5DB/AAAAAA?text=Product+6', link: '/products/running-shoes' },
-    { id: '7', name: 'Coffee Maker', price: '$79.99', imageUrl: 'https://placehold.co/400x400/D1D5DB/AAAAAA?text=Product+7', link: '/products/coffee-maker' },
-    { id: '8', name: 'Best Selling Novel', price: '$19.99', imageUrl: 'https://placehold.co/400x400/D1D5DB/AAAAAA?text=Product+8', link: '/products/best-novel' },
-  ];
+  try {
+    homepageElements = await getHomepageElements();
+  } catch (err: any) {
+    console.error("Failed to fetch homepage elements for rendering:", err);
+    error = err.message || "Could not load homepage content at this time. Please try again later.";
+    // In a real app, you might want to log this error to a monitoring service
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-12 px-4 text-center">
+        <h1 className="text-2xl font-semibold text-red-600 mb-4">Oops! Something went wrong.</h1>
+        <p className="text-gray-700">{error}</p>
+        <p className="mt-4 text-sm text-gray-500">
+          If the problem persists, please contact support.
+        </p>
+      </div>
+    );
+  }
+
+  if (homepageElements.length === 0) {
+    return (
+      <div className="container mx-auto py-12 px-4 text-center">
+        <h1 className="text-4xl font-bold text-gray-700 mb-4">Welcome to Our Store!</h1>
+        <p className="text-lg text-gray-500 mb-8">
+          Our homepage is currently under construction. Please check back soon for exciting updates!
+        </p>
+        <p className="text-gray-500">
+          In the meantime, feel free to <a href="/products" className="text-blue-600 hover:underline">browse our products</a>.
+        </p>
+        {/* Optionally, include a default minimal hero or some featured content here */}
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-20 px-4 sm:px-6 lg:px-8 rounded-lg shadow-lg mb-12 overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="https://placehold.co/1920x1080/3B82F6/FFFFFF?text=Welcome!" // Placeholder background image
-            alt="Hero background"
-            fill
-            style={{ objectFit: 'cover' }}
-            priority // Preload this image as it's LCP
-            className="opacity-30"
-          />
-        </div>
-        <div className="relative container mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight">
-            Welcome to Our E-Commerce Store!
-          </h1>
-          <p className="text-lg sm:text-xl lg:text-2xl mb-8 max-w-2xl mx-auto">
-            Discover the latest trends, top-quality products, and unbeatable deals.
-          </p>
-          <Link
-            href="/products"
-            className="inline-block bg-white text-indigo-600 px-8 py-3 rounded-md font-semibold text-lg hover:bg-gray-100 transition duration-300 ease-in-out transform hover:scale-105 shadow-md"
-          >
-            Shop Now
-          </Link>
-        </div>
-      </section>
-
-      {/* Featured Categories Section */}
-      <section className="py-12">
-        <h2 className="text-3xl font-semibold text-center mb-10">Shop by Category</h2>
-        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-          {categories.map((category) => (
-            <CategoryCard key={category.name} {...category} />
-          ))}
-        </div>
-      </section>
-
-      {/* New Arrivals Section */}
-      <section className="py-12 bg-gray-50">
-        <h2 className="text-3xl font-semibold text-center mb-10">New Arrivals</h2>
-        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-          {newArrivals.map((product) => (
-            <SimpleProductCard key={product.id} {...product} />
-          ))}
-        </div>
-      </section>
-
-      {/* Popular Products Section */}
-      <section className="py-12">
-        <h2 className="text-3xl font-semibold text-center mb-10">Popular Products</h2>
-        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-          {popularProducts.map((product) => (
-            <SimpleProductCard key={product.id} {...product} />
-          ))}
-        </div>
-      </section>
+    <div className="space-y-0"> {/* Remove default space-y if elements manage their own margins */}
+      {homepageElements.map(element => renderPageElement(element))}
     </div>
   );
 }

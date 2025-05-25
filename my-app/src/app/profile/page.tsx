@@ -1,14 +1,28 @@
+"use client";
 import Link from 'next/link';
 import Image from 'next/image'; // For wishlist items or other images
 import SimpleProductCard from '@/components/products/SimpleProductCard'; // Re-using for wishlist
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import useAuthStore from '@/store/authStore';
 
 export default function ProfilePage() {
-  // Placeholder data
-  const user = {
-    fullName: 'John Doe',
-    email: 'john.doe@example.com',
-  };
+  const router = useRouter();
+  const { user, isLoading, token } = useAuthStore((state) => ({
+    user: state.user,
+    isLoading: state.isLoading,
+    token: state.token, // Get token to help determine auth status before user object is fully loaded
+  }));
 
+  useEffect(() => {
+    // Redirect if not authenticated and loading is complete
+    // Check token as well, as user might be null briefly during initial loadUserFromToken
+    if (!isLoading && !user && !localStorage.getItem('authToken')) { // Check localStorage directly as a final measure
+      router.replace('/login');
+    }
+  }, [user, isLoading, token, router]); // Add token to dependencies
+
+  // Placeholder data for sections not yet dynamic
   const orders = [
     { id: 'ORD12345', date: '2023-10-15', status: 'Delivered', total: '$125.50', items: 3 },
     { id: 'ORD67890', date: '2023-11-01', status: 'Shipped', total: '$75.00', items: 1 },
@@ -51,24 +65,30 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center tracking-tight text-gray-900">Your Account</h1>
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center tracking-tight text-gray-900">
+        {user ? `${user.name}'s Account` : 'Your Account'}
+      </h1>
 
       {/* Account Details Section */}
       <section id="account-details" className="mb-12 p-6 sm:p-8 bg-white shadow-xl rounded-lg">
         <h2 className="text-2xl lg:text-3xl font-semibold mb-6 text-gray-800 border-b pb-3">Account Details</h2>
-        <form className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="profileFullName" className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input type="text" id="profileFullName" defaultValue={user.fullName} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+        {isLoading && !user && <p>Loading user details...</p>}
+        {!isLoading && !user && <p>Please <Link href="/login" className="text-blue-600 hover:underline">login</Link> to view your profile.</p>}
+        {user && (
+          <form className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="profileFullName" className="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="profileFullName" value={user.name || ''} readOnly className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed" />
+              </div>
+              <div>
+                <label htmlFor="profileEmail" className="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="profileEmail" value={user.email || ''} readOnly className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed" />
+              </div>
             </div>
-            <div>
-              <label htmlFor="profileEmail" className="block text-sm font-medium text-gray-700">Email Address</label>
-              <input type="email" id="profileEmail" defaultValue={user.email} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-            </div>
-          </div>
-          
-          <div className="pt-4">
+            
+            {/* Password change form can remain, but functionality is not part of this subtask */}
+            <div className="pt-4">
             <h3 className="text-lg font-medium text-gray-700 mb-3">Change Password</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>

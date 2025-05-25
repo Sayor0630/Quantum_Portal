@@ -3,45 +3,43 @@ import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore'; // Added import
 
 interface ProductCardProps {
+  _id: string; // MongoDB ID
   name: string;
-  price: string;
+  price: number; // Changed to number
   imageUrl: string;
-  rating?: number;
-  reviewCount?: number;
   slug: string;
+  // Rating and reviewCount are removed as they are not in IProduct model directly
 }
 
-export default function ProductCard({ name, price, imageUrl, rating, reviewCount, slug }: ProductCardProps) {
+export default function ProductCard({ _id, name, price, imageUrl, slug }: ProductCardProps) {
+  const addItemToCart = useCartStore((state) => state.addItem);
+
   return (
     <Link href={`/products/${slug}`} className="block border rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden group bg-white">
       <div className="relative w-full aspect-[4/3]"> {/* Aspect ratio for image */}
-        <Image src={imageUrl} alt={name} fill style={{ objectFit: 'cover' }} className="group-hover:scale-105 transition-transform duration-300" />
+        <Image src={imageUrl || 'https://placehold.co/400x300?text=No+Image'} alt={name} fill style={{ objectFit: 'cover' }} className="group-hover:scale-105 transition-transform duration-300" />
       </div>
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-grow"> {/* Added flex-grow and flex-col for button positioning */}
         <h3 className="text-lg font-semibold mb-1 group-hover:text-blue-500 truncate" title={name}>{name}</h3>
-        <p className="text-xl font-bold text-gray-800 mb-2">${price}</p>
-        {rating && reviewCount && (
-          <div className="flex items-center mb-2">
-            {/* Basic Star Rating Placeholder */}
-            <span className="text-yellow-400">{'★'.repeat(Math.round(rating))}{'☆'.repeat(5 - Math.round(rating))}</span>
-            <span className="ml-2 text-sm text-gray-500">({reviewCount} reviews)</span>
-          </div>
-        )}
+        <p className="text-xl font-bold text-gray-800 mb-2">${price.toFixed(2)}</p> {/* Format price for display */}
+        
+        {/* Removed rating and reviewCount display */}
+
         <button 
           onClick={(e) => {
             e.preventDefault(); // Prevent navigation when clicking button
-            const itemToAdd = {
-              id: slug, // Using slug as ID
+            addItemToCart({
+              id: _id, // Use actual product ID
               name,
-              price: parseFloat(price), // Convert string price to number
+              price, // Price is already a number
               imageUrl,
               slug,
-            };
-            useCartStore.getState().addItem(itemToAdd);
-            console.log(`Added ${name} to cart`, itemToAdd);
+              // quantity is handled by the store's addItem logic (defaults to 1 or increments)
+            });
+            console.log(`Added ${name} to cart`);
             // Add more sophisticated user feedback here if needed (e.g., toast notification)
           }}
-          className="w-full mt-2 bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors duration-300"
+          className="w-full mt-auto bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors duration-300" // Added mt-auto to push button to bottom
         >
           Add to Cart
         </button>

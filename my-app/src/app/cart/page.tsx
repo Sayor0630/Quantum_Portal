@@ -1,3 +1,4 @@
+"use client"; // Added directive
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore'; // Added import
